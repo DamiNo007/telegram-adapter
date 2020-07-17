@@ -9,6 +9,7 @@ import scala.concurrent.Future
 import org.json4s.jackson.JsonMethods.parse
 import GithubBot.restClient.RestClientImpl._
 
+import scala.annotation.tailrec
 import scala.util.Failure
 import scala.util.Success
 
@@ -42,6 +43,19 @@ class RequestActor extends Actor {
       }
   }
 
+  def mkListOfString(list: List[GithubRepository]): List[String] = {
+    @tailrec
+    def innerFunc(lst: List[GithubRepository], res: List[String], acc: Int): List[String] = acc match {
+      case -1 => res
+      case num: Int => {
+        val str = s"${acc + 1}. ${lst(acc).name}: size = ${lst(acc).size}, stargazers = ${lst(acc).stargazers_count}, push date = ${lst(acc).pushed_at}, fork = ${if (lst(acc).fork) "Forked" else "Not Forked"}"
+        innerFunc(lst, str :: res, acc - 1)
+      }
+    }
+
+    innerFunc(list, List(), list.length - 1)
+  }
+
 
   override def receive: Receive = {
     case GetUserAccount(login) => {
@@ -65,8 +79,10 @@ class RequestActor extends Actor {
       val sender = context.sender()
       getUserRepositories(login).onComplete {
         case Success(response) => {
+          val list = mkListOfString(response)
+          val result = if (list.isEmpty) "Sorry, this account does not have any repositories yet!" else list.mkString("\n")
           sender ! GetRepositoriesResponse(
-            response.mkString("\n")
+            result
           )
         }
         case Failure(e) => sender ! (
