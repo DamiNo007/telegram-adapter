@@ -48,11 +48,9 @@ class TelegramService(token: String, workerActor: ActorRef)
     (workerActor ? GetUser(
       msg.text.map(x => x.split(" ").last.trim).getOrElse("unknown")
     )).mapTo[Response]
-      .map(response => {
-        if (response.isInstanceOf[GetUserResponse])
-          reply(response.asInstanceOf[GetUserResponse].response)
-        else
-          reply(response.asInstanceOf[GetUserFailedResponse].response)
+      .map(response => response match {
+        case res: GetUserResponse => reply(res.response)
+        case _ => reply(response.asInstanceOf[GetUserFailedResponse].response)
       })
       .void
   }
@@ -61,11 +59,9 @@ class TelegramService(token: String, workerActor: ActorRef)
     (workerActor ? GetRepositories(
       msg.text.map(x => x.split(" ").last.trim).getOrElse("unknown")
     )).mapTo[Response]
-      .map(response => {
-        if (response.isInstanceOf[GetRepositoriesResponse])
-          reply(response.asInstanceOf[GetRepositoriesResponse].response)
-        else
-          reply(response.asInstanceOf[GetRepositoriesFailedResponse].response)
+      .map(response => response match {
+        case res: GetRepositoriesResponse => reply(res.response)
+        case _ => reply(response.asInstanceOf[GetRepositoriesFailedResponse].response)
       })
       .void
   }
