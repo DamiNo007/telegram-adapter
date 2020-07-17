@@ -7,7 +7,7 @@ import akka.actor.Actor
 
 import scala.concurrent.Future
 import org.json4s.jackson.JsonMethods.parse
-import githubbot.restClient.RestClientImpl._
+import githubbot.restclient.RestClientImpl._
 
 import scala.annotation.tailrec
 import scala.util.Failure
