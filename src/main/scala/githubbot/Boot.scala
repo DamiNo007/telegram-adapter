@@ -1,6 +1,6 @@
-package GithubBot
+package githubbot
 
-import GithubBot.services.TelegramService
+import githubbot.services.TelegramService
 import akka.actor.Props
 import packages._
 import actors._

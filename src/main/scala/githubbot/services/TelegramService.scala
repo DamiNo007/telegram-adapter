@@ -1,5 +1,7 @@
-package GithubBot.services
+package githubbot.services
 
+import scala.util.Failure
+import scala.util.Success
 import akka.actor.{Actor, ActorRef}
 import akka.pattern.ask
 import akka.util.Timeout
@@ -11,7 +13,8 @@ import com.softwaremill.sttp.SttpBackend
 import com.softwaremill.sttp.okhttp.OkHttpFutureBackend
 import cats.instances.future._
 import cats.syntax.functor._
-import GithubBot.actors.TelegramActor.{GetRepositories, GetRepositoriesResponse, GetUser, GetUserResponse}
+import githubbot.actors.RequestActor.GithubRepository
+import githubbot.actors.TelegramActor.{GetRepositories, GetRepositoriesFailedResponse, GetRepositoriesResponse, GetUser, GetUserFailedResponse, GetUserResponse, Response}
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
@@ -44,16 +47,26 @@ class TelegramService(token: String, workerActor: ActorRef)
   onCommand("/getGithubUser") { implicit msg =>
     (workerActor ? GetUser(
       msg.text.map(x => x.split(" ").last.trim).getOrElse("unknown")
-    )).mapTo[GetUserResponse]
-      .map(response => reply(response.response))
+    )).mapTo[Response]
+      .map(response => {
+        if (response.isInstanceOf[GetUserResponse])
+          reply(response.asInstanceOf[GetUserResponse].response)
+        else
+          reply(response.asInstanceOf[GetUserFailedResponse].response)
+      })
       .void
   }
 
   onCommand("/getUserRepositories") { implicit msg =>
     (workerActor ? GetRepositories(
       msg.text.map(x => x.split(" ").last.trim).getOrElse("unknown")
-    )).mapTo[GetRepositoriesResponse]
-      .map(response => reply(response.response))
+    )).mapTo[Response]
+      .map(response => {
+        if (response.isInstanceOf[GetRepositoriesResponse])
+          reply(response.asInstanceOf[GetRepositoriesResponse].response)
+        else
+          reply(response.asInstanceOf[GetRepositoriesFailedResponse].response)
+      })
       .void
   }
 

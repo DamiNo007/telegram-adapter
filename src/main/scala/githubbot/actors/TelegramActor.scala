@@ -1,7 +1,7 @@
-package GithubBot.actors
+package githubbot.actors
 
-import GithubBot.actors.RequestActor.{GetUserAccount, GetUserRepositories}
-import GithubBot.actors.TelegramActor.{GetRepositories, GetRepositoriesResponse, GetUser, GetUserResponse}
+import githubbot.actors.RequestActor.{GetUserAccount, GetUserRepositories}
+import githubbot.actors.TelegramActor.{GetRepositories, GetRepositoriesResponse, GetUser, GetUserFailedResponse, GetUserResponse}
 
 import scala.util.Failure
 import scala.util.Success
@@ -14,13 +14,19 @@ import scala.concurrent.duration._
 
 object TelegramActor {
 
-  case class GetUser(login: String)
+  trait Response
 
-  case class GetUserResponse(response: String)
+  case class GetUser(login: String)
 
   case class GetRepositories(login: String)
 
-  case class GetRepositoriesResponse(response: String)
+  case class GetUserResponse(response: String) extends Response
+
+  case class GetUserFailedResponse(response: String) extends Response
+
+  case class GetRepositoriesResponse(response: String) extends Response
+
+  case class GetRepositoriesFailedResponse(response: String) extends Response
 
 }
 
@@ -36,20 +42,18 @@ class TelegramActor extends Actor {
       (requestActor ? GetUserAccount(login)).onComplete {
         case Success(value) => sender ! value
         case Failure(e) => {
-          sender ! GetUserResponse(e.getMessage)
+          sender ! GetUserFailedResponse(e.getMessage)
         }
       }
-      requestActor ! GetUserAccount(login)
     }
     case GetRepositories(login) => {
       val sender = context.sender()
       (requestActor ? GetUserRepositories(login)).onComplete {
         case Success(value) => sender ! value
         case Failure(e) => {
-          sender ! GetRepositoriesResponse(e.getMessage)
+          sender ! GetUserFailedResponse(e.getMessage)
         }
       }
     }
   }
-
 }

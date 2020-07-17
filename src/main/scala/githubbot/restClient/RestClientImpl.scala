@@ -1,4 +1,4 @@
-package GithubBot.restClient
+package githubbot.restClient
 
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http

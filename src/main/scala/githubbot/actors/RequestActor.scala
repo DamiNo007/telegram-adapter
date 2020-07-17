@@ -1,13 +1,13 @@
-package GithubBot.actors
+package githubbot.actors
 
-import GithubBot.actors.RequestActor.{GetUserAccount, GetUserRepositories, GithubRepository, GithubUser}
-import GithubBot.actors.TelegramActor.{GetRepositoriesResponse, GetUserResponse}
-import GithubBot.packages._
+import githubbot.actors.RequestActor.{GetUserAccount, GetUserRepositories, GithubRepository, GithubUser}
+import githubbot.actors.TelegramActor.{GetUserResponse, GetUserFailedResponse, GetRepositoriesResponse, GetRepositoriesFailedResponse}
+import githubbot.packages._
 import akka.actor.Actor
 
 import scala.concurrent.Future
 import org.json4s.jackson.JsonMethods.parse
-import GithubBot.restClient.RestClientImpl._
+import githubbot.restClient.RestClientImpl._
 
 import scala.annotation.tailrec
 import scala.util.Failure
@@ -20,9 +20,9 @@ object RequestActor {
 
   case class GetUserRepositories(login: String)
 
-  case class GithubUser(login: String, name: String, avatarUrl: Option[String], public_repos: Option[String])
+  case class GithubUser(login: String, name: String, avatarUrl: Option[String], publicRepos: Option[String])
 
-  case class GithubRepository(name: String, size: Int, fork: Boolean, pushed_at: String, stargazers_count: Int)
+  case class GithubRepository(name: String, size: Int, fork: Boolean, pushedAt: String, stargazersCount: Int)
 
 }
 
@@ -32,14 +32,14 @@ class RequestActor extends Actor {
   def getGithubUser(username: String): Future[GithubUser] = {
     get(s"https://api.github.com/users/$username")
       .map {
-        body => parse(body).extract[GithubUser]
+        body => parse(body).camelizeKeys.extract[GithubUser]
       }
   }
 
   def getUserRepositories(username: String): Future[List[GithubRepository]] = {
     get(s"https://api.github.com/users/${username}/repos")
       .map {
-        body => parse(body).extract[List[GithubRepository]]
+        body => parse(body).camelizeKeys.extract[List[GithubRepository]]
       }
   }
 
@@ -48,7 +48,7 @@ class RequestActor extends Actor {
     def innerFunc(lst: List[GithubRepository], res: List[String], acc: Int): List[String] = acc match {
       case -1 => res
       case num: Int => {
-        val str = s"${acc + 1}. ${lst(acc).name}: size = ${lst(acc).size}, stargazers = ${lst(acc).stargazers_count}, push date = ${lst(acc).pushed_at}, fork = ${if (lst(acc).fork) "Forked" else "Not Forked"}"
+        val str = s"${acc + 1}. ${lst(acc).name}: size = ${lst(acc).size}, stargazers = ${lst(acc).stargazersCount}, push date = ${lst(acc).pushedAt}, fork = ${if (lst(acc).fork) "Forked" else "Not Forked"}"
         innerFunc(lst, str :: res, acc - 1)
       }
     }
@@ -67,12 +67,12 @@ class RequestActor extends Actor {
                |Full name: ${user.name}
                |Login: ${user.login}
                |Avatar:  ${user.avatarUrl.getOrElse("None")}
-               |Repositories:  ${user.public_repos.getOrElse("None")} """.stripMargin
+               |Repositories:  ${user.publicRepos.getOrElse("None")} """.stripMargin
           )
         }
         case Failure(e) => sender ! (
-          if (e.getMessage().contains("No usable value for login")) GetUserResponse("Account does not exist!")
-          else GetUserResponse("Connection error occured!"))
+          if (e.getMessage().contains("No usable value for login")) GetUserFailedResponse("Account does not exist!")
+          else GetUserFailedResponse("Connection error occured!"))
       }
     }
     case GetUserRepositories(login) => {
@@ -86,8 +86,8 @@ class RequestActor extends Actor {
           )
         }
         case Failure(e) => sender ! (
-          if (e.getMessage().contains("Expected collection but got JObject")) GetRepositoriesResponse("Account does not exist!")
-          else GetRepositoriesResponse("Connection error occured!"))
+          if (e.getMessage().contains("Expected collection but got JObject")) GetRepositoriesFailedResponse("Account does not exist!")
+          else GetRepositoriesFailedResponse("Connection error occured!"))
       }
     }
   }
