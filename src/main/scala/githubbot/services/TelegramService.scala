@@ -47,7 +47,7 @@ class TelegramService(token: String, workerActor: ActorRef)
     )).mapTo[Response]
       .map {
         case res: GetUserResponse => reply(res.response)
-        case response => reply(response.asInstanceOf[GetUserFailedResponse].response)
+        case res: GetUserFailedResponse => reply(res.response)
       }
       .void
   }
@@ -58,7 +58,7 @@ class TelegramService(token: String, workerActor: ActorRef)
     )).mapTo[Response]
       .map {
         case res: GetRepositoriesResponse => reply(res.response)
-        case response => reply(response.asInstanceOf[GetRepositoriesFailedResponse].response)
+        case res: GetRepositoriesFailedResponse => reply(res.response)
       }
       .void
   }
@@ -69,5 +69,4 @@ class TelegramService(token: String, workerActor: ActorRef)
       reply(s"ECHO: ${msg.text.getOrElse("")}").void
     } else Future()
   }
-
 }

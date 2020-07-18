@@ -48,7 +48,7 @@ class TelegramService(token: String, workerActor: ActorRef)
       .mapTo[Response]
       .map {
         case res: GetCurrenciesResponse => reply(res.response)
-        case response => reply(response.asInstanceOf[GetCurrenciesFailedResponse].response)
+        case res: GetCurrenciesFailedResponse => reply(res.response)
       }
       .void
   }
@@ -62,7 +62,7 @@ class TelegramService(token: String, workerActor: ActorRef)
           .mapTo[Response]
           .map {
             case res: ConvertResponse => reply(res.response)
-            case response => reply(response.asInstanceOf[ConvertFailedResponse].response)
+            case res: ConvertFailedResponse => reply(res.response)
           }
           .void
       case _ => reply("Incorrect command! Example: RUB KZT 100").void

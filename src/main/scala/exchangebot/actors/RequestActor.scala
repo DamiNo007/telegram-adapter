@@ -23,7 +23,6 @@ object RequestActor {
 
 }
 
-
 class RequestActor extends Actor {
 
   def getCurrencies(url: String): Future[CurrencyAll] = {
