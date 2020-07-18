@@ -1,7 +1,5 @@
 package githubbot.services
 
-import scala.util.Failure
-import scala.util.Success
 import akka.actor.{Actor, ActorRef}
 import akka.pattern.ask
 import akka.util.Timeout
@@ -13,7 +11,6 @@ import com.softwaremill.sttp.SttpBackend
 import com.softwaremill.sttp.okhttp.OkHttpFutureBackend
 import cats.instances.future._
 import cats.syntax.functor._
-import githubbot.actors.RequestActor.GithubRepository
 import githubbot.actors.TelegramActor.{GetRepositories, GetRepositoriesFailedResponse, GetRepositoriesResponse, GetUser, GetUserFailedResponse, GetUserResponse, Response}
 
 import scala.concurrent.Future
