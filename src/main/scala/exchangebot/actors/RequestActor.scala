@@ -33,7 +33,6 @@ class RequestActor extends Actor {
       }
   }
 
-
   def convert(url: String): Future[Converted] = {
     get(url)
       .map {
@@ -60,7 +59,6 @@ class RequestActor extends Actor {
                |""".stripMargin)
       }
     }
-
     case GetConvertResult(from, to, amount) => {
       val sender = context.sender()
       val url = s"https://fixer-fixer-currency-v1.p.rapidapi.com/convert?from=${from}&to=${to}&amount=${amount}"

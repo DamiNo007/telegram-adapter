@@ -50,7 +50,6 @@ class TelegramActor extends Actor {
         }
       }
     }
-
     case Convert(from, to, amount) => {
       val sender = context.sender()
       (requestActor ? GetConvertResult(
