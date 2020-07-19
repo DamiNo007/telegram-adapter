@@ -16,10 +16,10 @@ object Boot extends App {
     ExecutionContext.global
   val config = ConfigFactory.load()
   val token = config.getString("telegram-token")
-  println(token)
-
   val githubActor = system.actorOf(Props(new GithubWorkerActor()))
   val exchangeActor = system.actorOf(Props(new ExchangeWorkerActor()))
+
+  println("Starting bot...")
 
   new TelegramService(token, githubActor, exchangeActor).run()
 

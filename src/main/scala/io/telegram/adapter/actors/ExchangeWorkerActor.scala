@@ -13,7 +13,7 @@ import scala.util.{Failure, Success}
 
 class ExchangeWorkerActor()(implicit val system: ActorSystem,
                             materializer: Materializer)
-    extends Actor {
+  extends Actor {
 
   implicit val ex: ExecutionContext = context.dispatcher
   implicit val formats: Formats = DefaultFormats

@@ -12,7 +12,7 @@ import scala.util.{Failure, Success}
 
 class GithubWorkerActor()(implicit val system: ActorSystem,
                           materializer: Materializer)
-    extends Actor {
+  extends Actor {
 
   implicit val timeout: Timeout = 100.seconds
   implicit val ex: ExecutionContext = context.dispatcher

@@ -19,7 +19,7 @@ import scala.concurrent.duration._
 class TelegramService(token: String,
                       githubWorkerActor: ActorRef,
                       exchangeWorkerActor: ActorRef)
-    extends TelegramBot
+  extends TelegramBot
     with Polling
     with Commands[Future] {
 
@@ -51,7 +51,7 @@ class TelegramService(token: String,
       msg.text.map(x => x.split(" ").last.trim).getOrElse("unknown")
     )).mapTo[Response]
       .map {
-        case res: GetUserResponse       => reply(res.response)
+        case res: GetUserResponse => reply(res.response)
         case res: GetUserFailedResponse => reply(res.response)
       }
       .void
@@ -62,7 +62,7 @@ class TelegramService(token: String,
       msg.text.map(x => x.split(" ").last.trim).getOrElse("unknown")
     )).mapTo[Response]
       .map {
-        case res: GetRepositoriesResponse       => reply(res.response)
+        case res: GetRepositoriesResponse => reply(res.response)
         case res: GetRepositoriesFailedResponse => reply(res.response)
       }
       .void
@@ -73,7 +73,7 @@ class TelegramService(token: String,
     (exchangeWorkerActor ? GetCurrencies(msg.text.toString))
       .mapTo[Response]
       .map {
-        case res: GetCurrenciesResponse       => reply(res.response)
+        case res: GetCurrenciesResponse => reply(res.response)
         case res: GetCurrenciesFailedResponse => reply(res.response)
       }
       .void
@@ -90,7 +90,7 @@ class TelegramService(token: String,
           msgSplit(3).toUpperCase()
         )).mapTo[Response]
           .map {
-            case res: ConvertResponse       => reply(res.response)
+            case res: ConvertResponse => reply(res.response)
             case res: ConvertFailedResponse => reply(res.response)
           }
           .void
