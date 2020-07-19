@@ -66,7 +66,7 @@ class GithubRequesterActor()(implicit val system: ActorSystem,
   }
 
   override def receive: Receive = {
-    case GetUserAccount(login) => {
+    case GetUserAccount(login) =>
       val sender = context.sender()
       getGithubUser(login).onComplete {
         case Success(user) =>
@@ -84,7 +84,6 @@ class GithubRequesterActor()(implicit val system: ActorSystem,
             GetUserFailedResponse("Account does not exist!")
           else GetUserFailedResponse("Connection error occured!"))
       }
-    }
     case GetUserRepositories(login) =>
       val sender = context.sender()
       getUserRepositories(login).onComplete {

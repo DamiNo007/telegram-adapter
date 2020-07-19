@@ -27,7 +27,7 @@ class GithubWorkerActor()(implicit val system: ActorSystem,
           sender ! GetUserFailedResponse(e.getMessage)
         }
       }
-    case GetRepositories(login) => {
+    case GetRepositories(login) =>
       val sender = context.sender()
       (requestActor ? GetUserRepositories(login)).onComplete {
         case Success(value) => sender ! value
@@ -35,6 +35,5 @@ class GithubWorkerActor()(implicit val system: ActorSystem,
           sender ! GetUserFailedResponse(e.getMessage)
         }
       }
-    }
   }
 }
