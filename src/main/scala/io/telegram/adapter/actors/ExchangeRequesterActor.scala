@@ -23,6 +23,8 @@ object ExchangeRequesterActor {
 
   case class GetConvertResult(from: String, to: String, amount: String)
 
+  case class GetAllCurrenciesHttp(msg: String)
+
 }
 
 class ExchangeRequesterActor()(implicit val system: ActorSystem,
@@ -86,6 +88,24 @@ class ExchangeRequesterActor()(implicit val system: ActorSystem,
             sender ! ConvertFailedResponse(
               "Connection problems! Try again later!"
             )
+      }
+    case GetAllCurrenciesHttp(msg) =>
+      println(msg)
+      val sender = context.sender()
+      val url = s"${baseUrl}/symbols"
+      getCurrencies(url).onComplete {
+        case Success(response) =>
+          val res = ListMap(response.symbols.toSeq.sortBy(_._1): _*)
+          sender ! GetCurrenciesResponseHttp(
+            res
+          )
+        case Failure(e) =>
+          sender ! GetCurrenciesFailedResponse(
+            s"""Something went wrong! Try again later...
+               |Details:
+               |${e.getMessage}
+               |""".stripMargin
+          )
       }
   }
 }

@@ -17,6 +17,10 @@ object GithubRequesterActor {
 
   case class GetUserRepositories(login: String)
 
+  case class GetUserAccountHttp(login: String)
+
+  case class GetUserRepositoriesHttp(login: String)
+
   case class GithubUser(login: String,
                         name: String,
                         avatarUrl: Option[String],
@@ -102,6 +106,32 @@ class GithubRequesterActor()(implicit val system: ActorSystem,
             GetRepositoriesFailedResponse(
               "Connection error occured!"
             ))
+      }
+    case GetUserAccountHttp(login) =>
+      val sender = context.sender()
+      getGithubUser(login).onComplete {
+        case Success(user) =>
+          sender ! GetUserHttpResponse(user)
+        case Failure(e) =>
+          sender ! (if (e.getMessage().contains("No usable value for login"))
+            GetUserFailedResponse("Account does not exist!")
+          else GetUserFailedResponse("Connection error occured!"))
+      }
+
+    case GetUserRepositoriesHttp(login) =>
+      val sender = context.sender()
+      getUserRepositories(login).onComplete {
+        case Success(response) =>
+          sender ! GetRepositoriesHttpResponse(response)
+        case Failure(e) =>
+          sender ! (if (e.getMessage()
+            .contains("Expected collection but got JObject"))
+            GetRepositoriesFailedResponse("Account does not exist!")
+          else
+            GetRepositoriesFailedResponse(
+              "Connection error occured!"
+            ))
+
       }
   }
 }

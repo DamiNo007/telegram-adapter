@@ -52,7 +52,7 @@ class TelegramService(token: String,
     )).mapTo[Response]
       .map {
         case res: GetUserResponse => reply(res.response)
-        case res: GetUserFailedResponse => reply(res.response)
+        case res: GetUserFailedResponse => reply(res.error)
       }
       .void
   }
@@ -63,7 +63,7 @@ class TelegramService(token: String,
     )).mapTo[Response]
       .map {
         case res: GetRepositoriesResponse => reply(res.response)
-        case res: GetRepositoriesFailedResponse => reply(res.response)
+        case res: GetRepositoriesFailedResponse => reply(res.error)
       }
       .void
   }
@@ -74,7 +74,7 @@ class TelegramService(token: String,
       .mapTo[Response]
       .map {
         case res: GetCurrenciesResponse => reply(res.response)
-        case res: GetCurrenciesFailedResponse => reply(res.response)
+        case res: GetCurrenciesFailedResponse => reply(res.error)
       }
       .void
   }
@@ -91,7 +91,7 @@ class TelegramService(token: String,
         )).mapTo[Response]
           .map {
             case res: ConvertResponse => reply(res.response)
-            case res: ConvertFailedResponse => reply(res.response)
+            case res: ConvertFailedResponse => reply(res.error)
           }
           .void
       case _ => reply("Incorrect command! Example: RUB KZT 100").void

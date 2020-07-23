@@ -11,6 +11,11 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
 import scala.util.{Failure, Success}
 
+object ExchangeWorkerActor {
+  def props()(implicit system: ActorSystem, materializer: Materializer): Props =
+    Props(new ExchangeWorkerActor())
+}
+
 class ExchangeWorkerActor()(implicit val system: ActorSystem,
                             materializer: Materializer)
   extends Actor {
@@ -42,6 +47,19 @@ class ExchangeWorkerActor()(implicit val system: ActorSystem,
         case Success(value) => sender ! value
         case Failure(e) =>
           sender ! ConvertFailedResponse(
+            s"""Something went wrong! Try again later...
+               |Details:
+               |${e.getMessage}
+               |""".stripMargin
+          )
+      }
+
+    case GetCurrenciesHttp(msg) =>
+      val sender = context.sender()
+      (requestActor ? GetAllCurrenciesHttp(msg)).onComplete {
+        case Success(value) => sender ! value
+        case Failure(e) =>
+          sender ! GetCurrenciesFailedResponse(
             s"""Something went wrong! Try again later...
                |Details:
                |${e.getMessage}
