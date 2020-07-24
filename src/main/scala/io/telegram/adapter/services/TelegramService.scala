@@ -41,6 +41,7 @@ class TelegramService(token: String,
         |/getGithubUser <login> - gets user's data
         |/getUserRepositories <login> - gets user's repositories with description
         |/currencies - gets the list of currencies
+        |/rates <currency> - gets current currency rates
         |/convert <from> <to> <amount> - converts one currency to another
         |""".stripMargin
     ).void
@@ -79,6 +80,17 @@ class TelegramService(token: String,
       .void
   }
 
+  onCommand("/rates") { implicit msg =>
+    (exchangeWorkerActor ? GetRates(
+      msg.text.map(x => x.split(" ").last.trim).getOrElse("unknown")
+    )).mapTo[Response]
+      .map {
+        case res: GetRatesResponse => reply(res.response)
+        case res: GetRatesFailedResponse => reply(res.error)
+      }
+      .void
+  }
+
   onCommand("/convert") { implicit msg =>
     println(s"получил комманду ${msg.text}")
     val msgSplit = msg.text.getOrElse("unknown").split(" ")
@@ -94,7 +106,7 @@ class TelegramService(token: String,
             case res: ConvertFailedResponse => reply(res.error)
           }
           .void
-      case _ => reply("Incorrect command! Example: RUB KZT 100").void
+      case _ => reply("Incorrect command! Example: /convert RUB KZT 100").void
     }
   }
 

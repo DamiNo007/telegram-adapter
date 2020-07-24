@@ -1,5 +1,6 @@
 package io.telegram.adapter
 
+import io.telegram.adapter.actors.ExchangeRequesterActor.Rates
 import io.telegram.adapter.actors.GithubRequesterActor.{GithubRepository, GithubUser}
 
 package object actors {
@@ -11,6 +12,10 @@ package object actors {
   case class GetCurrencies(msg: String) extends Request
 
   case class GetCurrenciesHttp(msg: String) extends Request
+
+  case class GetRates(currency: String) extends Request
+
+  case class GetRatesHttp(currency: String) extends Request
 
   case class Convert(from: String, to: String, amount: String) extends Request
 
@@ -25,6 +30,12 @@ package object actors {
   case class GetCurrenciesResponse(response: String) extends Response
 
   case class GetCurrenciesResponseHttp(symbols: Map[String, String]) extends Response
+
+  case class GetRatesResponse(response: String) extends Response
+
+  case class GetRatesHttpResponse(rates: List[Rates]) extends Response
+
+  case class GetRatesFailedResponse(error: String) extends Response
 
   case class GetCurrenciesFailedResponse(error: String) extends Response
 

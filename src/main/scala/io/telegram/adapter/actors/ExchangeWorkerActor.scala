@@ -41,6 +41,20 @@ class ExchangeWorkerActor()(implicit val system: ActorSystem,
                |""".stripMargin
           )
       }
+
+    case GetRates(currency) =>
+      val sender = context.sender()
+      (requestActor ? GetRatesAll(currency)).onComplete {
+        case Success(value) => sender ! value
+        case Failure(e) =>
+          sender ! GetRatesFailedResponse(
+            s"""Something went wrong! Try again later...
+               |Details:
+               |${e.getMessage}
+               |""".stripMargin
+          )
+      }
+
     case Convert(from, to, amount) =>
       val sender = context.sender()
       (requestActor ? GetConvertResult(from, to, amount)).onComplete {
@@ -60,6 +74,19 @@ class ExchangeWorkerActor()(implicit val system: ActorSystem,
         case Success(value) => sender ! value
         case Failure(e) =>
           sender ! GetCurrenciesFailedResponse(
+            s"""Something went wrong! Try again later...
+               |Details:
+               |${e.getMessage}
+               |""".stripMargin
+          )
+      }
+
+    case GetRatesHttp(currency) =>
+      val sender = context.sender()
+      (requestActor ? GetRatesAllHttp(currency)).onComplete {
+        case Success(value) => sender ! value
+        case Failure(e) =>
+          sender ! GetRatesFailedResponse(
             s"""Something went wrong! Try again later...
                |Details:
                |${e.getMessage}

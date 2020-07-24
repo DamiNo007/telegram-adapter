@@ -131,7 +131,6 @@ class GithubRequesterActor()(implicit val system: ActorSystem,
             GetRepositoriesFailedResponse(
               "Connection error occured!"
             ))
-
       }
   }
 }
