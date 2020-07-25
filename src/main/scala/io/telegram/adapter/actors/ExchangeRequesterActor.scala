@@ -1,13 +1,12 @@
 package io.telegram.adapter.actors
 
-import akka.actor.{Actor, ActorSystem}
+import akka.actor.{Actor, ActorLogging, ActorSystem}
 import akka.http.scaladsl.model.headers.RawHeader
 import akka.stream.Materializer
 import io.telegram.adapter.Boot.config
 import io.telegram.adapter.actors.ExchangeRequesterActor._
-import io.telegram.adapter.actors.GithubRequesterActor.GithubRepository
 import io.telegram.adapter.utils.RestClientImpl.get
-import org.json4s.{DefaultFormats, Formats}
+import org.json4s.{DefaultFormats, Formats, MappingException}
 import org.json4s.jackson.JsonMethods.parse
 
 import scala.collection.immutable.ListMap
@@ -36,7 +35,7 @@ object ExchangeRequesterActor {
 
 class ExchangeRequesterActor()(implicit val system: ActorSystem,
                                materializer: Materializer)
-  extends Actor {
+  extends Actor with ActorLogging {
 
   implicit val ex: ExecutionContext = context.dispatcher
   implicit val formats: Formats = DefaultFormats
@@ -69,14 +68,14 @@ class ExchangeRequesterActor()(implicit val system: ActorSystem,
 
   def mkListOfString(list: List[Rates]): List[String] = {
     list.zipWithIndex.map {
-      case (ratesInfo, id) =>
-        s"${id + 1}. ${ratesInfo.bankTitle}: sell = ${ratesInfo.sell}, buy = ${ratesInfo.buy}, amount = ${ratesInfo.amount}; last date = ${ratesInfo.lastReceivedRatesTime}, logo-url = ${ratesInfo.bankLogoUrl}"
+      case (Rates(sell, buy, amount, bankId, title, ratesTime, imageUrl), id) =>
+        s"${id + 1}. $title: id = $bankId, sell = $sell, buy = $buy, amount = $amount; last date = $ratesTime, logo-url = $imageUrl"
     }
   }
 
   override def receive: Receive = {
     case GetAllCurrencies(msg) =>
-      println(msg)
+      log.info(s"got message $msg")
       val sender = context.sender()
       val url = s"${baseUrl}/symbols"
       getCurrencies(url).onComplete {
@@ -106,36 +105,35 @@ class ExchangeRequesterActor()(implicit val system: ActorSystem,
               "Sorry, empty response! No data about this currency."
             else listString.mkString("\n")
           sender ! GetRatesResponse(result)
-        case Failure(e) => {
-          if (e.getMessage.contains("Expected collection but got JObject"))
-            sender ! GetRatesFailedResponse(
-              "Incorrect Command! Example: /rates USD"
-            )
-          else
-            sender ! GetRatesFailedResponse(
-              "Connection problems! Try again later!"
-            )
-        }
+        case Failure(e: MappingException) =>
+          sender ! GetRatesFailedResponse(
+            "Incorrect Command! Example: /rates USD"
+          )
+        case Failure(e) =>
+          sender ! GetRatesFailedResponse(
+            "Connection problems! Try again later!"
+          )
       }
 
-    case GetConvertResult(from, to, amount) =>
+    case GetConvertResult(from, to, amount)
+    =>
       val sender = context.sender()
       val url =
         s"${baseUrl}/convert?from=${from}&to=${to}&amount=${amount}"
       convert(url).onComplete {
         case Success(response) =>
           sender ! ConvertResponse(s"${response.result} ${to.toUpperCase()}")
+        case Failure(e: MappingException) =>
+          sender ! ConvertFailedResponse(
+            "Some problems occurred! May be you wrote an incorrect currency name!"
+          )
         case Failure(e) =>
-          if (e.getMessage.contains("No usable value for result"))
-            sender ! ConvertFailedResponse(
-              "Some problems occured! May be you wrote an incorrect currency name!"
-            )
-          else
-            sender ! ConvertFailedResponse(
-              "Connection problems! Try again later!"
-            )
+          sender ! ConvertFailedResponse(
+            "Connection problems! Try again later!"
+          )
       }
-    case GetAllCurrenciesHttp(msg) =>
+    case GetAllCurrenciesHttp(msg)
+    =>
       println(msg)
       val sender = context.sender()
       val url = s"${baseUrl}/symbols"
@@ -153,7 +151,8 @@ class ExchangeRequesterActor()(implicit val system: ActorSystem,
                |""".stripMargin
           )
       }
-    case GetRatesAllHttp(currency) =>
+    case GetRatesAllHttp(currency)
+    =>
       println(currency)
       val sender = context.sender()
       val url = s"${ratesBaseUrl}/${currency.toUpperCase}"
@@ -161,15 +160,14 @@ class ExchangeRequesterActor()(implicit val system: ActorSystem,
         case Success(response) =>
           println(response)
           sender ! GetRatesHttpResponse(response)
+        case Failure(e: MappingException) =>
+          sender ! GetRatesFailedResponse(
+            "Incorrect Command! Example: /rates USD"
+          )
         case Failure(e) =>
-          if (e.getMessage.contains("Expected collection but got JObject"))
-            sender ! GetRatesFailedResponse(
-              "Incorrect Command! Example: /rates USD"
-            )
-          else
-            sender ! GetRatesFailedResponse(
-              "Connection problems! Try again later!"
-            )
+          sender ! GetRatesFailedResponse(
+            "Connection problems! Try again later!"
+          )
       }
   }
 }

@@ -1,7 +1,7 @@
 package io.telegram.adapter.actors
 
 import akka.pattern.ask
-import akka.actor.{Actor, ActorRef, ActorSystem, Props}
+import akka.actor.{Actor, ActorRef, ActorLogging, ActorSystem, Props}
 import akka.stream.Materializer
 import akka.util.Timeout
 import io.telegram.adapter.actors.ExchangeRequesterActor._
@@ -18,7 +18,7 @@ object ExchangeWorkerActor {
 
 class ExchangeWorkerActor()(implicit val system: ActorSystem,
                             materializer: Materializer)
-  extends Actor {
+  extends Actor with ActorLogging {
 
   implicit val ex: ExecutionContext = context.dispatcher
   implicit val formats: Formats = DefaultFormats
@@ -29,7 +29,7 @@ class ExchangeWorkerActor()(implicit val system: ActorSystem,
 
   override def receive: Receive = {
     case GetCurrencies(msg) =>
-      println(msg)
+      log.info(s"got msg $msg")
       val sender = context.sender()
       (requestActor ? GetAllCurrencies(msg)).onComplete {
         case Success(value) => sender ! value
@@ -69,6 +69,7 @@ class ExchangeWorkerActor()(implicit val system: ActorSystem,
       }
 
     case GetCurrenciesHttp(msg) =>
+      log.info(s"got msg $msg")
       val sender = context.sender()
       (requestActor ? GetAllCurrenciesHttp(msg)).onComplete {
         case Success(value) => sender ! value

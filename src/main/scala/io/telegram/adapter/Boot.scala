@@ -25,12 +25,12 @@ object Boot extends App {
   val host = config.getString("application.host")
   val port = config.getInt("application.port")
 
-  println("Starting bot...")
+  system.log.info("Starting bot...")
 
   new TelegramService(token, githubActor, exchangeActor).run()
 
   Http().bindAndHandle(routes.handlers, host, port)
 
-  println(s"running on $host:$port")
+  system.log.info(s"running on $host:$port")
 
 }

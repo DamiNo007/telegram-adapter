@@ -93,13 +93,13 @@ class TelegramService(token: String,
 
   onCommand("/convert") { implicit msg =>
     println(s"получил комманду ${msg.text}")
-    val msgSplit = msg.text.getOrElse("unknown").split(" ")
-    msgSplit.length match {
-      case 4 =>
+    val msgSplit = msg.text.getOrElse("unknown").split(" ").toList
+    msgSplit match {
+      case _ :: from :: to :: amount :: _ =>
         (exchangeWorkerActor ? Convert(
-          msgSplit(1).toUpperCase(),
-          msgSplit(2).toUpperCase(),
-          msgSplit(3).toUpperCase()
+          from,
+          to,
+          amount
         )).mapTo[Response]
           .map {
             case res: ConvertResponse => reply(res.response)
