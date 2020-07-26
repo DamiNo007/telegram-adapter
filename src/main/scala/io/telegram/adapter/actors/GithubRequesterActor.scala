@@ -4,7 +4,7 @@ import akka.actor.{Actor, ActorSystem}
 import akka.stream.Materializer
 import io.telegram.adapter.Boot.config
 import io.telegram.adapter.actors.GithubRequesterActor._
-import org.json4s.{DefaultFormats, Formats}
+import org.json4s.{DefaultFormats, Formats, MappingException}
 import org.json4s.jackson.JsonMethods.parse
 import io.telegram.adapter.utils.RestClientImpl._
 
@@ -16,6 +16,10 @@ object GithubRequesterActor {
   case class GetUserAccount(login: String)
 
   case class GetUserRepositories(login: String)
+
+  case class GetUserAccountHttp(login: String)
+
+  case class GetUserRepositoriesHttp(login: String)
 
   case class GithubUser(login: String,
                         name: String,
@@ -56,9 +60,9 @@ class GithubRequesterActor()(implicit val system: ActorSystem,
 
   def mkListOfString(list: List[GithubRepository]): List[String] = {
     list.zipWithIndex.map {
-      case (repoInfo, id) =>
-        s"${id + 1}. ${repoInfo.name}: size = ${repoInfo.size}, stargazers = ${repoInfo.stargazersCount}, push date = ${repoInfo.pushedAt}, fork = ${
-          if (repoInfo.fork)
+      case (GithubRepository(name, size, fork, pushedAt, stargazersCount), id) =>
+        s"${id + 1}. $name: size = $size, stargazers = $stargazersCount, push date = $pushedAt, fork = ${
+          if (fork)
             "Forked"
           else "Not Forked"
         }"
@@ -79,10 +83,10 @@ class GithubRequesterActor()(implicit val system: ActorSystem,
               user.publicRepos
                 .getOrElse("None")
             } """.stripMargin)
+        case Failure(e: MappingException) =>
+          sender ! GetUserFailedResponse("Account does not exist!")
         case Failure(e) =>
-          sender ! (if (e.getMessage().contains("No usable value for login"))
-            GetUserFailedResponse("Account does not exist!")
-          else GetUserFailedResponse("Connection error occured!"))
+          sender ! GetUserFailedResponse("Connection error occured!")
       }
     case GetUserRepositories(login) =>
       val sender = context.sender()
@@ -94,14 +98,31 @@ class GithubRequesterActor()(implicit val system: ActorSystem,
               "Sorry, this account does not have any repositories yet!"
             else list.mkString("\n")
           sender ! GetRepositoriesResponse(result)
+        case Failure(e: MappingException) =>
+          sender ! GetRepositoriesFailedResponse("Account does not exist!")
         case Failure(e) =>
-          sender ! (if (e.getMessage()
-            .contains("Expected collection but got JObject"))
-            GetRepositoriesFailedResponse("Account does not exist!")
-          else
-            GetRepositoriesFailedResponse(
-              "Connection error occured!"
-            ))
+          sender ! GetRepositoriesFailedResponse("Connection error occured!")
+      }
+    case GetUserAccountHttp(login) =>
+      val sender = context.sender()
+      getGithubUser(login).onComplete {
+        case Success(user) =>
+          sender ! GetUserHttpResponse(user)
+        case Failure(e: MappingException) =>
+          sender ! GetUserFailedResponse("Account does not exist!")
+        case Failure(e) =>
+          sender ! GetUserFailedResponse("Connection error occured!")
+      }
+
+    case GetUserRepositoriesHttp(login) =>
+      val sender = context.sender()
+      getUserRepositories(login).onComplete {
+        case Success(response) =>
+          sender ! GetRepositoriesHttpResponse(response)
+        case Failure(e: MappingException) =>
+          sender ! GetRepositoriesFailedResponse("Account does not exist!")
+        case Failure(e) =>
+          sender ! GetRepositoriesFailedResponse("Connection error occured!")
       }
   }
 }

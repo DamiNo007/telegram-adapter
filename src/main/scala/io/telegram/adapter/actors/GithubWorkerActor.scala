@@ -1,6 +1,6 @@
 package io.telegram.adapter.actors
 
-import akka.actor.{Actor, ActorSystem, Props}
+import akka.actor.{Actor, ActorLogging, ActorSystem, Props}
 import akka.pattern.ask
 import akka.stream.Materializer
 import akka.util.Timeout
@@ -10,9 +10,14 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
 import scala.util.{Failure, Success}
 
+object GithubWorkerActor {
+  def props()(implicit system: ActorSystem, materializer: Materializer): Props =
+    Props(new GithubWorkerActor())
+}
+
 class GithubWorkerActor()(implicit val system: ActorSystem,
                           materializer: Materializer)
-  extends Actor {
+  extends Actor with ActorLogging {
 
   implicit val timeout: Timeout = 100.seconds
   implicit val ex: ExecutionContext = context.dispatcher
@@ -22,18 +27,38 @@ class GithubWorkerActor()(implicit val system: ActorSystem,
     case GetUser(login) =>
       val sender = context.sender()
       (requestActor ? GetUserAccount(login)).onComplete {
-        case Success(value) => sender ! value
-        case Failure(e) => {
+        case Success(value) =>
+          sender ! value
+        case Failure(e) =>
           sender ! GetUserFailedResponse(e.getMessage)
-        }
       }
     case GetRepositories(login) =>
       val sender = context.sender()
       (requestActor ? GetUserRepositories(login)).onComplete {
         case Success(value) => sender ! value
-        case Failure(e) => {
+        case Failure(e) =>
           sender ! GetUserFailedResponse(e.getMessage)
-        }
+      }
+
+    case GetUserHttp(login) =>
+      val sender = context.sender()
+      (requestActor ? GetUserAccountHttp(login)).onComplete {
+        case Success(value) => sender ! value
+        case Failure(e) =>
+          sender ! GetUserFailedResponse(e.getMessage)
+      }
+
+    case GetRepositoriesHttp(login) =>
+      val sender = context.sender()
+      (requestActor ? GetUserRepositoriesHttp(login)).onComplete {
+        case Success(value) =>
+          log.info(s"received response $value")
+          sender ! value
+        case Failure(e) =>
+          log.warning(
+            s"received error response from github api ${e.getMessage}"
+          )
+          sender ! GetUserFailedResponse(e.getMessage)
       }
   }
 }
