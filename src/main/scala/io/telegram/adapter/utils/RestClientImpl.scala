@@ -9,6 +9,7 @@ import akka.util.ByteString
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.concurrent.duration._
+import scala.xml.{Elem, XML}
 
 object RestClientImpl {
 
@@ -20,6 +21,11 @@ object RestClientImpl {
         .runFold(ByteString.empty)((acc, bytes) => acc ++ bytes)
         .map(_.utf8String)
     }
+
+  def getXml(url: String): Elem = {
+    val xml = XML.load(url)
+    xml
+  }
 
   def get(url: String,
           headers: List[RawHeader],

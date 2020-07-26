@@ -132,7 +132,6 @@ class ExchangeRequesterActor()(implicit val system: ActorSystem,
           )
       }
     case GetAllCurrenciesHttp(msg) =>
-      println(msg)
       val sender = context.sender()
       val url = s"${baseUrl}/symbols"
       getCurrencies(url).onComplete {
@@ -150,12 +149,10 @@ class ExchangeRequesterActor()(implicit val system: ActorSystem,
           )
       }
     case GetRatesAllHttp(currency) =>
-      println(currency)
       val sender = context.sender()
       val url = s"${ratesBaseUrl}/${currency.toUpperCase}"
       getRates(url).onComplete {
         case Success(response) =>
-          println(response)
           sender ! GetRatesHttpResponse(response)
         case Failure(e: MappingException) =>
           sender ! GetRatesFailedResponse(
