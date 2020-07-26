@@ -115,8 +115,7 @@ class ExchangeRequesterActor()(implicit val system: ActorSystem,
           )
       }
 
-    case GetConvertResult(from, to, amount)
-    =>
+    case GetConvertResult(from, to, amount) =>
       val sender = context.sender()
       val url =
         s"${baseUrl}/convert?from=${from}&to=${to}&amount=${amount}"
@@ -132,8 +131,7 @@ class ExchangeRequesterActor()(implicit val system: ActorSystem,
             "Connection problems! Try again later!"
           )
       }
-    case GetAllCurrenciesHttp(msg)
-    =>
+    case GetAllCurrenciesHttp(msg) =>
       println(msg)
       val sender = context.sender()
       val url = s"${baseUrl}/symbols"
@@ -151,8 +149,7 @@ class ExchangeRequesterActor()(implicit val system: ActorSystem,
                |""".stripMargin
           )
       }
-    case GetRatesAllHttp(currency)
-    =>
+    case GetRatesAllHttp(currency) =>
       println(currency)
       val sender = context.sender()
       val url = s"${ratesBaseUrl}/${currency.toUpperCase}"
