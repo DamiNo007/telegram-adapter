@@ -18,7 +18,9 @@ import scala.concurrent.duration._
 
 class TelegramService(token: String,
                       githubWorkerActor: ActorRef,
-                      exchangeWorkerActor: ActorRef)
+                      exchangeWorkerActor: ActorRef,
+                      newsWorkerActor: ActorRef,
+                      articlesWorkerActor: ActorRef)
   extends TelegramBot
     with Polling
     with Commands[Future] {
@@ -108,6 +110,30 @@ class TelegramService(token: String,
           .void
       case _ => reply("Incorrect command! Example: /convert RUB KZT 100").void
     }
+  }
+
+  onCommand("/news") { implicit msg =>
+    println(s"получил комманду ${msg.text}")
+    (newsWorkerActor ? GetNews(
+      msg.text.toString
+    )).mapTo[Response]
+      .map {
+        case res: GetNewsResponse => reply(res.response)
+        case res: GetNewsFailedResponse => reply(res.error)
+      }
+      .void
+  }
+
+  onCommand("/articles") { implicit msg =>
+    println(s"получил комманду ${msg.text}")
+    (articlesWorkerActor ? GetArticles(
+      msg.text.toString
+    )).mapTo[Response]
+      .map {
+        case res: GetArticlesResponse => reply(res.response)
+        case res: GetArticlesFailedResponse => reply(res.error)
+      }
+      .void
   }
 
   onMessage { implicit msg =>

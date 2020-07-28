@@ -7,7 +7,7 @@ import akka.util.Timeout
 import scala.concurrent.{ExecutionContext, Future, Promise}
 import akka.http.scaladsl.server.Directives._
 import de.heikoseeberger.akkahttpjson4s.Json4sSupport
-import io.telegram.adapter.actors.{Convert, ExchangeWorkerActor, GetCurrenciesHttp, GetRatesHttp, GetRepositoriesHttp, GetUserHttp, GithubWorkerActor, Request}
+import io.telegram.adapter.actors.{ArticlesWorkerActor, Convert, ExchangeWorkerActor, GetArticlesHttp, GetCurrenciesHttp, GetNewsHttp, GetRatesHttp, GetRepositoriesHttp, GetUserHttp, GithubWorkerActor, NewsWorkerActor, Request}
 import io.telegram.adapter.actors.PerRequest.PerRequestActor
 import org.json4s.jackson.Serialization
 import org.json4s.{DefaultFormats, Formats, Serialization}
@@ -50,6 +50,18 @@ class Routes()(implicit ex: ExecutionContext, system: ActorSystem) extends Json4
             val body = GetRatesHttp(currency)
             completeRequest(body, ctx, ExchangeWorkerActor.props)
           }
+        }
+      }
+    } ~ pathPrefix("profitKZ") {
+      pathPrefix("news") {
+        get { ctx =>
+          val body = GetNewsHttp("news")
+          completeRequest(body, ctx, NewsWorkerActor.props)
+        }
+      } ~ pathPrefix("articles") {
+        get { ctx =>
+          val body = GetArticlesHttp("articles")
+          completeRequest(body, ctx, ArticlesWorkerActor.props)
         }
       }
     }

@@ -4,7 +4,7 @@ import akka.actor.{ActorSystem, Props}
 import akka.stream.Materializer
 import akka.http.scaladsl.Http
 import com.typesafe.config.ConfigFactory
-import io.telegram.adapter.actors.{ExchangeWorkerActor, GithubWorkerActor}
+import io.telegram.adapter.actors.{ArticlesWorkerActor, ExchangeWorkerActor, GithubWorkerActor, NewsRequesterActor, NewsWorkerActor}
 import io.telegram.adapter.http.routes.Routes
 import io.telegram.adapter.services.TelegramService
 
@@ -20,6 +20,8 @@ object Boot extends App {
   val token = config.getString("telegram-token")
   val githubActor = system.actorOf(Props(new GithubWorkerActor()))
   val exchangeActor = system.actorOf(Props(new ExchangeWorkerActor()))
+  val newsActor = system.actorOf(Props(new NewsWorkerActor()))
+  val articlesActor = system.actorOf(Props(new ArticlesWorkerActor()))
 
   val routes = new Routes()
   val host = config.getString("application.host")
@@ -27,7 +29,7 @@ object Boot extends App {
 
   system.log.info("Starting bot...")
 
-  new TelegramService(token, githubActor, exchangeActor).run()
+  new TelegramService(token, githubActor, exchangeActor, newsActor, articlesActor).run()
 
   Http().bindAndHandle(routes.handlers, host, port)
 
